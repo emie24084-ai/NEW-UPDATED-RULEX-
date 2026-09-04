@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Waleed Khan — WhatsApp Server</title>
+<style>
+  :root{
+    --wa-green:#25D366;
+    --wa-dark:#075E54;
+    --wa-teal:#128C7E;
+    --wa-light:#DCF8C6;
+    --bg:#ffffff;
+    --card:#ffffff;
+    --text:#111827;
+    --muted:#6b7280;
+    --border:#e5e7eb;
+    --danger:#ef4444;
+    --warning:#f59e0b;
+    --success:#10b981;
+    --shadow:0 4px 20px rgba(0,0,0,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:linear-gradient(135deg,#f0fdf4 0%,#ffffff 50%,#ecfdf5 100%);
+    color:var(--text);
+    min-height:100vh;
+    line-height:1.5;
+  }
+  /* Header */
+  .header{
+    background:#fff;
+    border-bottom:3px solid var(--wa-green);
+    padding:16px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    box-shadow:var(--shadow);
+    position:sticky;top:0;z-index:100;
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:48px;height:48px;
+    background:var(--wa-green);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 12px rgba(37,211,102,0.3);
+  }
+  .logo svg{width:28px;height:28px;fill:#fff}
+  .brand-text h1{font-size:20px;color:var(--wa-dark);font-weight:700}
+  .brand-text p{font-size:12px;color:var(--muted)}
+  .user-info{display:flex;align-items:center;gap:12px}
+  .user-badge{
+    background:var(--wa-light);
+    color:var(--wa-dark);
+    padding:6px 14px;
+    border-radius:20px;
+    font-weight:600;
+    font-size:13px;
+  }
+  .btn-logout{
+    background:#fff;
+    border:1px solid var(--border);
+    padding:6px 14px;
+    border-radius:20px;
+    cursor:pointer;
+    font-size:13px;
+    color:var(--danger);
+    font-weight:500;
+    transition:all .2s;
+  }
+  .btn-logout:hover{background:#fef2f2;border-color:var(--danger)}
+
+  /* Container */
+  .container{max-width:1200px;margin:0 auto;padding:24px}
+  .hidden{display:none !important}
+
+  /* Auth card */
+  .auth-wrap{
+    min-height:calc(100vh - 90px);
+    display:flex;align-items:center;justify-content:center;
+    padding:24px;
+  }
+  .auth-card{
+    background:#fff;
+    border-radius:20px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.08);
+    padding:40px;
+    width:100%;max-width:440px;
+    border:1px solid var(--border);
+  }
+  .auth-card h2{
+    color:var(--wa-dark);
+    margin-bottom:8px;
+    font-size:26px;
+    text-align:center;
+  }
+  .auth-card .subtitle{
+    text-align:center;
+    color:var(--muted);
+    margin-bottom:24px;
+    font-size:14px;
+  }
+  .tabs{
+    display:flex;
+    background:#f3f4f6;
+    border-radius:12px;
+    padding:4px;
+    margin-bottom:24px;
+  }
+  .tab{
+    flex:1;
+    padding:10px;
+    text-align:center;
+    cursor:pointer;
+    border-radius:8px;
+    font-weight:600;
+    font-size:14px;
+    color:var(--muted);
+    transition:all .2s;
+  }
+  .tab.active{background:#fff;color:var(--wa-dark);box-shadow:0 2px 6px rgba(0,0,0,0.05)}
+  .form-group{margin-bottom:16px}
+  .form-group label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:var(--text);
+    margin-bottom:6px;
+  }
+  .form-group input, .form-group select, .form-group textarea{
+    width:100%;
+    padding:10px 14px;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    font-size:14px;
+    transition:all .2s;
+    background:#fff;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus{
+    outline:none;
+    border-color:var(--wa-green);
+    box-shadow:0 0 0 3px rgba(37,211,102,0.15);
+  }
+  .btn{
+    width:100%;
+    padding:12px;
+    background:var(--wa-green);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all .2s;
+    margin-top:8px;
+  }
+  .btn:hover{background:var(--wa-teal);transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,211,102,0.3)}
+  .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+  .btn-secondary{background:#fff;color:var(--wa-dark);border:1.5px solid var(--wa-green)}
+  .btn-secondary:hover{background:var(--wa-light)}
+  .btn-danger{background:var(--danger)}
+  .btn-danger:hover{background:#dc2626}
+  .btn-sm{padding:6px 12px;font-size:12px;width:auto;margin:0}
+  .msg{
+    padding:10px 14px;
+    border-radius:8px;
+    font-size:13px;
+    margin-bottom:12px;
+    display:none;
+  }
+  .msg.show{display:block}
+  .msg.success{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7}
+  .msg.error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+  .msg.info{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+
+  /* Dashboard */
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:16px;
+    margin-bottom:24px;
+  }
+  .stat-card{
+    background:#fff;
+    border-radius:14px;
+    padding:20px;
+    border:1px solid var(--border);
+    box-shadow:var(--shadow);
+  }
+  .stat-card .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .stat-card .value{font-size:28px;font-weight:700;color:var(--wa-dark);margin-top:6px}
+  .stat-card .sub{font-size:12px;color:var(--muted);margin-top:4px}
+
+  .panel{
+    background:#fff;
+    border-radius:14px;
+    padding:24px;
+    border:1px solid var(--border);
+    box-shadow:var(--shadow);
+    margin-bottom:20px;
+  }
+  .panel h3{
+    color:var(--wa-dark);
+    margin-bottom:16px;
+    font-size:18px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .panel h3::before{
+    content:'';
+    width:4px;height:20px;
+    background:var(--wa-green);
+    border-radius:2px;
+  }
+
+  /* Nav tabs */
+  .nav-tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+  }
+  .nav-tab{
+    padding:10px 18px;
+    background:#fff;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:13px;
+    color:var(--muted);
+    transition:all .2s;
+  }
+  .nav-tab.active{background:var(--wa-green);color:#fff;border-color:var(--wa-green)}
+  .nav-tab:hover:not(.active){border-color:var(--wa-green);color:var(--wa-dark)}
+
+  /* Session list */
+  .session-item{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:16px;
+    margin-bottom:12px;
+    transition:all .2s;
+  }
+  .session-item:hover{border-color:var(--wa-green);box-shadow:0 4px 12px rgba(37,211,102,0.1)}
+  .session-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .session-id{font-weight:700;color:var(--wa-dark);font-size:14px;word-break:break-all}
+  .session-meta{display:flex;gap:8px;flex-wrap:wrap}
+  .badge{
+    padding:3px 10px;
+    border-radius:12px;
+    font-size:11px;
+    font-weight:600;
+  }
+  .badge-green{background:var(--wa-light);color:var(--wa-dark)}
+  .badge-red{background:#fee2e2;color:#991b1b}
+  .badge-yellow{background:#fef3c7;color:#92400e}
+  .badge-blue{background:#dbeafe;color:#1e40af}
+  .session-details{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:10px;
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:12px;
+  }
+  .session-details div strong{color:var(--text);display:block;font-size:11px;text-transform:uppercase;margin-bottom:2px}
+  .session-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+  /* Pending users */
+  .pending-item{
+    background:#fff;
+    border:1px solid var(--border);
+    border-left:4px solid var(--warning);
+    border-radius:10px;
+    padding:14px;
+    margin-bottom:10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .pending-info{flex:1;min-width:200px}
+  .pending-info .name{font-weight:700;color:var(--text);font-size:15px}
+  .pending-info .time{font-size:12px;color:var(--muted);margin-top:2px}
+  .pending-actions{display:flex;gap:8px}
+
+  /* Logs */
+  .log-box{
+    background:#111827;
+    color:#d1d5db;
+    padding:14px;
+    border-radius:10px;
+    font-family:'Courier New',monospace;
+    font-size:12px;
+    max-height:300px;
+    overflow-y:auto;
+    line-height:1.7;
+  }
+  .log-box .log-line{padding:2px 0;border-bottom:1px solid #1f2937}
+  .log-box .log-line.ok{color:#6ee7b7}
+  .log-box .log-line.err{color:#fca5a5}
+
+  /* Loader */
+  .loader{
+    display:inline-block;
+    width:16px;height:16px;
+    border:2px solid rgba(255,255,255,.3);
+    border-top-color:#fff;
+    border-radius:50%;
+    animation:spin .8s linear infinite;
+    margin-right:6px;
+    vertical-align:middle;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* Footer */
+  .footer{
+    text-align:center;
+    padding:20px;
+    color:var(--muted);
+    font-size:12px;
+  }
+  .footer strong{color:var(--wa-dark)}
+
+  /* Responsive */
+  @media(max-width:640px){
+    .header{padding:12px 16px;flex-wrap:wrap;gap:10px}
+    .brand-text h1{font-size:16px}
+    .container{padding:16px}
+    .auth-card{padding:24px}
+    .stats{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header" id="mainHeader" style="display:none">
+  <div class="brand">
+    <div class="logo">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+    </div>
+    <div class="brand-text">
+      <h1>Waleed Khan</h1>
+      <p>WhatsApp Server Panel</p>
+    </div>
+  </div>
+  <div class="user-info">
+    <span class="user-badge" id="userBadge">User</span>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+</header>
+
+<!-- AUTH SECTION -->
+<div class="auth-wrap" id="authSection">
+  <div class="auth-card">
+    <div style="text-align:center;margin-bottom:20px">
+      <div class="logo" style="margin:0 auto 12px;width:64px;height:64px">
+        <svg viewBox="0 0 24 24" style="width:36px;height:36px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+      </div>
+    </div>
+    <h2>Welcome Back</h2>
+    <p class="subtitle">Sign in to manage your WhatsApp sessions</p>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchAuthTab('login')">Login</div>
+      <div class="tab" onclick="switchAuthTab('signup')">Sign Up</div>
+    </div>
+
+    <div id="authMsg" class="msg"></div>
+
+    <!-- Login Form -->
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="loginUser" required placeholder="Enter username"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPass" required placeholder="Enter password"/>
+      </div>
+      <div class="form-group">
+        <label>Approval Key <small style="color:var(--muted)">(received from admin)</small></label>
+        <input type="text" id="loginKey" placeholder="Your approval key"/>
+      </div>
+      <button type="submit" class="btn" id="loginBtn">Login</button>
+    </form>
+
+    <!-- Signup Form -->
+    <form id="signupForm" class="hidden" onsubmit="handleSignup(event)">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="signupUser" required minlength="3" placeholder="Choose username (min 3 chars)"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signupPass" required minlength="6" placeholder="Choose password (min 6 chars)"/>
+      </div>
+      <button type="submit" class="btn" id="signupBtn">Request Approval</button>
+      <p style="text-align:center;margin-top:12px;font-size:12px;color:var(--muted)">
+        ⏳ Your account will be pending until admin approves
+      </p>
+    </form>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="container hidden" id="dashboardSection">
+  <div class="stats" id="statsRow">
+    <div class="stat-card">
+      <div class="label">Server Uptime</div>
+      <div class="value" id="statUptime">--</div>
+      <div class="sub" id="statStart">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">My Sessions</div>
+      <div class="value" id="statSessions">0</div>
+      <div class="sub">Active running</div>
+    </div>
+    <div class="stat-card" id="pendingStatCard" style="display:none">
+      <div class="label">Pending Users</div>
+      <div class="value" id="statPending">0</div>
+      <div class="sub">Awaiting approval</div>
+    </div>
+    <div class="stat-card" id="totalUsersCard" style="display:none">
+      <div class="label">Total Users</div>
+      <div class="value" id="statUsers">0</div>
+      <div class="sub">Registered</div>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchView('sessions')">📱 My Sessions</div>
+    <div class="nav-tab" onclick="switchView('create')">➕ Create Session</div>
+    <div class="nav-tab admin-only" onclick="switchView('pending')" style="display:none">⏳ Pending Users</div>
+    <div class="nav-tab admin-only" onclick="switchView('users')" style="display:none">👥 All Users</div>
+    <div class="nav-tab admin-only" onclick="switchView('allSessions')" style="display:none">📊 All Sessions</div>
+  </div>
+
+  <!-- Sessions View -->
+  <div id="view-sessions" class="view-panel">
+    <div class="panel">
+      <h3>My Active Sessions</h3>
+      <div id="sessionsList"><p style="color:var(--muted);text-align:center;padding:20px">Loading...</p></div>
+    </div>
+  </div>
+
+  <!-- Create Session View -->
+  <div id="view-create" class="view-panel hidden">
+    <div class="panel">
+      <h3>Create New Session</h3>
+      <form id="createForm" onsubmit="handleCreateSession(event)">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+          <div class="form-group">
+            <label>Prefix Name *</label>
+            <input type="text" id="cf_prefix" required placeholder="e.g. Waleed Bot"/>
+          </div>
+          <div class="form-group">
+            <label>Delay (seconds) *</label>
+            <input type="number" id="cf_delay" required min="3" value="5"/>
+          </div>
+          <div class="form-group">
+            <label>Target Type *</label>
+            <select id="cf_type" onchange="toggleTargetField()">
+              <option value="ib">Individual (IB/Contact)</option>
+              <option value="gc">Group (GC)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Session Type *</label>
+            <select id="cf_sessionType" onchange="toggleSessionFields()">
+              <option value="message">Text Message</option>
+              <option value="image">Image + Caption</option>
+              <option value="sticker">Sticker</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label id="targetLabel">Target ID (Phone numbers, comma/newline separated) *</label>
+          <textarea id="cf_targetID" rows="2" required placeholder="923001234567, 923009876543"></textarea>
+        </div>
+
+        <div class="form-group" id="mentionGroup">
+          <label>Mention Mode (Group only)</label>
+          <select id="cf_mentionType">
+            <option value="none">None</option>
+            <option value="single">Single (from list)</option>
+            <option value="all_listed">All Listed Numbers</option>
+            <option value="all_group">All Group Members (auto)</option>
+            <option value="all_tag">@all Native Tag</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="mentionNumGroup" style="display:none">
+          <label>Mention Numbers (comma/newline separated)</label>
+          <textarea id="cf_mentionNumbers" rows="2" placeholder="923001234567, 923009876543"></textarea>
+        </div>
+
+        <div class="form-group" id="msgFileGroup">
+          <label>Message File (.txt) *</label>
+          <input type="file" id="cf_messageFile" accept=".txt"/>
+        </div>
+
+        <div class="form-group" id="mediaFileGroup" style="display:none">
+          <label>Media Files (Images/Stickers) *</label>
+          <input type="file" id="cf_mediaFiles" multiple accept="image/*"/>
+        </div>
+
+        <div class="form-group">
+          <label>creds.json (WhatsApp credentials) *</label>
+          <input type="file" id="cf_creds" accept=".json" required/>
+        </div>
+
+        <!-- Auto Reply Section -->
+        <div style="background:var(--wa-light);padding:14px;border-radius:10px;margin:14px 0">
+          <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--wa-dark);cursor:pointer">
+            <input type="checkbox" id="cf_autoReply" style="width:auto"/>
+            Enable Auto-Reply (responds to incoming messages)
+          </label>
+          <div id="autoReplyBox" style="margin-top:10px;display:none">
+            <label style="font-size:13px;color:var(--wa-dark)">Auto-Reply Message:</label>
+            <input type="text" id="cf_autoReplyMsg" placeholder="Thanks for your message! I'll reply soon."/>
+          </div>
+        </div>
+
+        <div id="createMsg" class="msg"></div>
+        <button type="submit" class="btn" id="createBtn">🚀 Start Session</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Pending Users View (Admin) -->
+  <div id="view-pending" class="view-panel hidden">
+    <div class="panel">
+      <h3>Pending Users (Awaiting Approval)</h3>
+      <div id="pendingList"><p style="color:var(--muted);text-align:center;padding:20px">Loading...</p></div>
+    </div>
+  </div>
+
+  <!-- All Users View (Admin) -->
+  <div id="view-users" class="view-panel hidden">
+    <div class="panel">
+      <h3>All Registered Users</h3>
+      <div id="usersList"><p style="color:var(--muted);text-align:center;padding:20px">Loading...</p></div>
+    </div>
+  </div>
+
+  <!-- All Sessions View (Admin) -->
+  <div id="view-allSessions" class="view-panel hidden">
+    <div class="panel">
+      <h3>All Sessions</h3>
+      <div id="allSessionsList"><p style="color:var(--muted);text-align:center;padding:20px">Loading...</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <p>Powered by <strong>Waleed Khan</strong> • WhatsApp Server Panel © 2026</p>
+</div>
+
+<script>
+// ============ STATE ============
+let currentUser = null;
+let currentRole = null;
+let currentApprovalKey = null;
+let refreshInterval = null;
+
+// ============ AUTH ============
+function switchAuthTab(tab){
+  document.querySelectorAll('.auth-card .tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('loginForm').classList.toggle('hidden', tab!=='login');
+  document.getElementById('signupForm').classList.toggle('hidden', tab!=='signup');
+  hideMsg('authMsg');
+}
+
+function showMsg(id, text, type='info'){
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'msg show ' + type;
+}
+function hideMsg(id){
+  const el = document.getElementById(id);
+  if(el) el.className = 'msg';
+}
+
+async function handleLogin(e){
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader"></span>Logging in...';
+  hideMsg('authMsg');
+  try{
+    const res = await fetch('/api/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        username: document.getElementById('loginUser').value,
+        password: document.getElementById('loginPass').value,
+        approvalKey: document.getElementById('loginKey').value || undefined
+      })
+    });
+    const data = await res.json();
+    if(data.ok){
+      currentUser = data.username;
+      currentRole = data.role;
+      currentApprovalKey = data.approvalKey || null;
+      localStorage.setItem('wk_user', JSON.stringify({username:data.username, role:data.role, approvalKey:data.approvalKey}));
+      showDashboard();
+    } else {
+      showMsg('authMsg', data.error || 'Login failed', 'error');
+    }
+  } catch(err){
+    showMsg('authMsg', 'Network error: '+err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Login';
+  }
+}
+
+async function handleSignup(e){
+  e.preventDefault();
+  const btn = document.getElementById('signupBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader"></span>Submitting...';
+  hideMsg('authMsg');
+  try{
+    const res = await fetch('/api/signup',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        username: document.getElementById('signupUser').value,
+        password: document.getElementById('signupPass').value
+      })
+    });
+    const data = await res.json();
+    if(data.ok){
+      showMsg('authMsg', '✅ '+data.message, 'success');
+      document.getElementById('signupForm').reset();
+    } else {
+      showMsg('authMsg', data.error || 'Signup failed', 'error');
+    }
+  } catch(err){
+    showMsg('authMsg', 'Network error: '+err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Request Approval';
+  }
+}
+
+function logout(){
+  localStorage.removeItem('wk_user');
+  currentUser = null;
+  currentRole = null;
+  currentApprovalKey = null;
+  if(refreshInterval) clearInterval(refreshInterval);
+  document.getElementById('authSection').classList.remove('hidden');
+  document.getElementById('dashboardSection').classList.add('hidden');
+  document.getElementById('mainHeader').style.display = 'none';
+}
+
+// ============ DASHBOARD ============
+function showDashboard(){
+  document.getElementById('authSection').classList.add('hidden');
+  document.getElementById('dashboardSection').classList.remove('hidden');
+  document.getElementById('mainHeader').style.display = 'flex';
+  document.getElementById('userBadge').textContent = currentUser + (currentRole==='admin'?' 👑':'');
+
+  // Show admin tabs
+  document.querySelectorAll('.admin-only').forEach(el=>{
+    el.style.display = currentRole==='admin' ? 'block' : 'none';
+  });
+  if(currentRole==='admin'){
+    document.getElementById('pendingStatCard').style.display = 'block';
+    document.getElementById('totalUsersCard').style.display = 'block';
+  }
+
+  loadStats();
+  loadSessions();
+  if(currentRole==='admin'){
+    loadPendingUsers();
+    loadAllUsers();
+  }
+
+  if(refreshInterval) clearInterval(refreshInterval);
+  refreshInterval = setInterval(()=>{
+    loadStats();
+    loadSessions();
+    if(currentRole==='admin') loadPendingUsers();
+  }, 10000);
+}
+
+async function loadStats(){
+  try{
+    const up = await fetch('/api/uptime').then(r=>r.json());
+    if(up.ok){
+      document.getElementById('statUptime').textContent = up.uptimeFormatted;
+      document.getElementById('statStart').textContent = 'Since '+new Date(up.startTime).toLocaleString();
+    }
+    const sess = await fetch('/api/total-sessions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username:currentUser, role:currentRole})
+    }).then(r=>r.json());
+    if(sess.ok) document.getElementById('statSessions').textContent = sess.totalSessions;
+
+    if(currentRole==='admin'){
+      const pu = await fetch('/api/pending-users',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({role:'admin'})
+      }).then(r=>r.json());
+      if(pu.ok) document.getElementById('statPending').textContent = pu.pending.length;
+
+      const tu = await fetch('/api/total-users',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({role:'admin'})
+      }).then(r=>r.json());
+      if(tu.ok) document.getElementById('statUsers').textContent = tu.totalUsers;
+    }
+  } catch(e){}
+}
+
+function switchView(view){
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('.view-panel').forEach(p=>p.classList.add('hidden'));
+  document.getElementById('view-'+view).classList.remove('hidden');
+  if(view==='sessions') loadSessions();
+  if(view==='pending') loadPendingUsers();
+  if(view==='users') loadAllUsers();
+  if(view==='allSessions') loadAllSessions();
+}
+
+// ============ SESSIONS ============
+async function loadSessions(){
+  try{
+    const res = await fetch('/api/sessions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username:currentUser, role:currentRole})
+    });
+    const data = await res.json();
+    if(!data.ok) return;
+    renderSessions(data.sessions, 'sessionsList');
+  } catch(e){}
+}
+
+async function loadAllSessions(){
+  try{
+    const res = await fetch('/api/sessions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username:currentUser, role:'admin'})
+    });
+    const data = await res.json();
+    if(!data.ok) return;
+    renderSessions(data.sessions, 'allSessionsList');
+  } catch(e){}
+}
+
+function renderSessions(sessions, containerId){
+  const container = document.getElementById(containerId);
+  if(!sessions.length){
+    container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:30px">📭 No sessions yet. Create your first session!</p>';
+    return;
+  }
+  container.innerHTML = sessions.map(s=>{
+    const statusBadge = s.awaitingCredentials
+      ? '<span class="badge badge-red">⚠ Needs Creds</span>'
+      : (s.stopped ? '<span class="badge badge-red">Stopped</span>' : '<span class="badge badge-green">● Running</span>');
+    const arBadge = s.autoReplyEnabled ? '<span class="badge badge-blue">🤖 Auto-Reply ON</span>' : '';
+    return `
+      <div class="session-item">
+        <div class="session-head">
+          <div>
+            <div class="session-id">${s.sessionId}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">👤 ${s.username} • 📱 ${s.phone||'N/A'}</div>
+          </div>
+          <div class="session-meta">
+            ${statusBadge}
+            ${arBadge}
+            <span class="badge badge-green">${s.sessionType}</span>
+            <span class="badge badge-yellow">${s.target==='gc'?'Group':'Individual'}</span>
+          </div>
+        </div>
+        <div class="session-details">
+          <div><strong>UPTIME</strong>${s.uptime}</div>
+          <div><strong>DELAY</strong>${(s.delayMs/1000).toFixed(1)}s</div>
+          <div><strong>TARGETS</strong>${s.contacts.length}</div>
+          <div><strong>MEDIA</strong>${s.mediaCount} files</div>
+          ${s.groupId?`<div><strong>GROUP ID</strong>${s.groupId}</div>`:''}
+        </div>
+        <div class="session-actions">
+          <button class="btn btn-secondary btn-sm" onclick="viewLogs('${s.sessionId}')">📋 Logs</button>
+          <button class="btn btn-secondary btn-sm" onclick="toggleAutoReply('${s.sessionId}', ${!s.autoReplyEnabled})">
+            🤖 ${s.autoReplyEnabled?'Disable':'Enable'} Auto-Reply
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="stopSession('${s.sessionId}')">⏹ Stop</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function stopSession(id){
+  if(!confirm('Stop this session?')) return;
+  try{
+    const res = await fetch('/stop-session/'+id,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username:currentUser})
+    });
+    const data = await res.json();
+    alert(data.ok ? '✅ Session stopped' : '❌ '+data.error);
+    loadSessions();
+    loadStats();
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+async function toggleAutoReply(id, enable){
+  const msg = enable ? prompt('Enter auto-reply message:') : null;
+  if(enable && !msg) return;
+  try{
+    const res = await fetch('/api/session/'+id+'/auto-reply',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        username: currentUser,
+        role: currentRole,
+        enabled: enable,
+        message: msg || ''
+      })
+    });
+    const data = await res.json();
+    alert(data.ok ? (enable?'✅ Auto-Reply enabled':'✅ Auto-Reply disabled') : '❌ '+data.error);
+    loadSessions();
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+async function viewLogs(id){
+  try{
+    const res = await fetch('/api/logs/'+id,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username:currentUser, role:currentRole})
+    });
+    const data = await res.json();
+    if(!data.ok){ alert('Error: '+data.error); return; }
+    const lines = (data.logs||[]).map(l=>{
+      const cls = l.includes('[OK]')?'ok':(l.includes('[ERROR]')?'err':'');
+      return `<div class="log-line ${cls}">${escapeHtml(l)}</div>`;
+    }).join('');
+    const w = window.open('', '_blank', 'width=700,height=500');
+    w.document.write(`
+      <html><head><title>Logs - ${id}</title>
+      <style>body{font-family:monospace;background:#111827;color:#d1d5db;padding:20px}
+      .log-line{padding:4px 0;border-bottom:1px solid #1f2937}
+      .ok{color:#6ee7b7}.err{color:#fca5a5}</style></head>
+      <body><h2 style="color:#25D366">📋 Session Logs: ${id}</h2><div>${lines}</div></body></html>
+    `);
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+// ============ CREATE SESSION ============
+function toggleTargetField(){
+  const type = document.getElementById('cf_type').value;
+  document.getElementById('targetLabel').textContent = type==='gc'
+    ? 'Group ID (without @g.us) *'
+    : 'Target ID (Phone numbers, comma/newline separated) *';
+  document.getElementById('cf_targetID').placeholder = type==='gc'
+    ? '120363xxxxxxxxxx@g.us'
+    : '923001234567, 923009876543';
+}
+
+function toggleSessionFields(){
+  const st = document.getElementById('cf_sessionType').value;
+  document.getElementById('msgFileGroup').style.display = st==='sticker'?'none':'block';
+  document.getElementById('mediaFileGroup').style.display = st==='message'?'none':'block';
+  document.getElementById('cf_prefix').required = st!=='sticker';
+  document.getElementById('cf_messageFile').required = st!=='sticker';
+  document.getElementById('cf_mediaFiles').required = st!=='message';
+}
+
+document.getElementById('cf_autoReply').addEventListener('change', e=>{
+  document.getElementById('autoReplyBox').style.display = e.target.checked?'block':'none';
+});
+
+document.getElementById('cf_mentionType').addEventListener('change', e=>{
+  const v = e.target.value;
+  document.getElementById('mentionNumGroup').style.display =
+    (v==='single'||v==='all_listed') ? 'block' : 'none';
+});
+
+async function handleCreateSession(e){
+  e.preventDefault();
+  const btn = document.getElementById('createBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader"></span>Starting...';
+  hideMsg('createMsg');
+
+  const fd = new FormData();
+  fd.append('name', document.getElementById('cf_prefix').value);
+  fd.append('delayTime', document.getElementById('cf_delay').value);
+  fd.append('type', document.getElementById('cf_type').value);
+  fd.append('sessionType', document.getElementById('cf_sessionType').value);
+  fd.append('targetID', document.getElementById('cf_targetID').value);
+  fd.append('mentionType', document.getElementById('cf_mentionType').value);
+  fd.append('mentionNumbers', document.getElementById('cf_mentionNumbers').value);
+  fd.append('username', currentUser);
+  fd.append('approvalKey', currentApprovalKey);
+  fd.append('autoReplyEnabled', document.getElementById('cf_autoReply').checked);
+  fd.append('autoReplyMessage', document.getElementById('cf_autoReplyMsg').value);
+
+  const creds = document.getElementById('cf_creds').files[0];
+  if(creds) fd.append('creds', creds);
+  const mf = document.getElementById('cf_messageFile').files[0];
+  if(mf) fd.append('messageFile', mf);
+  const media = document.getElementById('cf_mediaFiles').files;
+  for(let i=0;i<media.length;i++) fd.append('mediaFiles', media[i]);
+
+  try{
+    const res = await fetch('/send-message',{method:'POST',body:fd});
+    const data = await res.json();
+    if(data.ok){
+      showMsg('createMsg', '✅ Session started! ID: '+data.sessionId, 'success');
+      document.getElementById('createForm').reset();
+      setTimeout(()=>{
+        switchView('sessions');
+        document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+        document.querySelector('.nav-tab').classList.add('active');
+      }, 1500);
+    } else {
+      showMsg('createMsg', '❌ '+data.error, 'error');
+    }
+  } catch(err){
+    showMsg('createMsg', '❌ Network error: '+err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🚀 Start Session';
+  }
+}
+
+// ============ ADMIN: PENDING USERS ============
+async function loadPendingUsers(){
+  if(currentRole!=='admin') return;
+  try{
+    const res = await fetch('/api/pending-users',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({role:'admin'})
+    });
+    const data = await res.json();
+    if(!data.ok) return;
+    const container = document.getElementById('pendingList');
+    if(!data.pending.length){
+      container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:30px">✅ No pending users</p>';
+      return;
+    }
+    container.innerHTML = data.pending.map(p=>`
+      <div class="pending-item">
+        <div class="pending-info">
+          <div class="name">👤 ${escapeHtml(p.username)}</div>
+          <div class="time">📅 Applied: ${new Date(p.createdAt).toLocaleString()}</div>
+          <div class="time">🆔 ${p.id}</div>
+        </div>
+        <div class="pending-actions">
+          <button class="btn btn-sm" style="background:var(--success)" onclick="approveUser('${p.id}')">✅ Approve</button>
+          <button class="btn btn-danger btn-sm" onclick="rejectUser('${p.id}')">❌ Reject</button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e){}
+}
+
+async function approveUser(id){
+  if(!confirm('Approve this user? They will receive an approval key.')) return;
+  try{
+    const res = await fetch('/api/approve-user',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({role:'admin', pendingId:id})
+    });
+    const data = await res.json();
+    if(data.ok){
+      alert(`✅ User approved!\n\nUsername: ${data.username}\nApproval Key: ${data.approvalKey}\n\nShare this key with the user.`);
+      loadPendingUsers();
+      loadStats();
+    } else {
+      alert('❌ '+data.error);
+    }
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+async function rejectUser(id){
+  if(!confirm('Reject this user?')) return;
+  try{
+    const res = await fetch('/api/reject-user',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({role:'admin', pendingId:id})
+    });
+    const data = await res.json();
+    alert(data.ok?'✅ User rejected':'❌ '+data.error);
+    loadPendingUsers();
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+// ============ ADMIN: ALL USERS ============
+async function loadAllUsers(){
+  if(currentRole!=='admin') return;
+  try{
+    const res = await fetch('/api/all-users',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({role:'admin'})
+    });
+    const data = await res.json();
+    if(!data.ok) return;
+    const container = document.getElementById('usersList');
+    if(!data.users.length){
+      container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:30px">No users yet</p>';
+      return;
+    }
+    container.innerHTML = data.users.map(u=>`
+      <div class="pending-item" style="border-left-color:var(--wa-green)">
+        <div class="pending-info">
+          <div class="name">👤 ${escapeHtml(u.username)} ${u.role==='admin'?'<span class="badge badge-yellow">ADMIN</span>':''}</div>
+          <div class="time">📅 Joined: ${new Date(u.createdAt).toLocaleString()}</div>
+          ${u.approvalKey?`<div class="time">🔑 Key: <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px">${u.approvalKey}</code></div>`:''}
+        </div>
+      </div>
+    `).join('');
+  } catch(e){}
+}
+
+// ============ INIT ============
+window.addEventListener('DOMContentLoaded', ()=>{
+  const saved = localStorage.getItem('wk_user');
+  if(saved){
+    try{
+      const u = JSON.parse(saved);
+      currentUser = u.username;
+      currentRole = u.role;
+      currentApprovalKey = u.approvalKey;
+      showDashboard();
+    } catch(e){}
+  }
+});
+</script>
+</body>
+</html>
