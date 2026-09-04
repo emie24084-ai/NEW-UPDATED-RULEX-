@@ -1,0 +1,8 @@
+node_modules/
+uploads/
+uploaded_sessions/
+users.json
+pending_users.json
+approval.txt
+*.log
+.DS_Store
